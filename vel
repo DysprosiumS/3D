@@ -1,0 +1,27 @@
+import pandas as pd
+import numpy as np
+import math
+
+
+# Calculating velocities
+def calculate_velocity(displacements, indx, colx, fps):
+    velocities = pd.DataFrame(data=0, index=np.arange(indx-1), columns=np.arange(colx), dtype=np.float64)
+    for j in range(colx):
+        for i in range(indx - 1):
+            displacement = displacements.iat[i, j]
+            velocities.iat[i, j] = displacement * fps
+            velocities.iat[i, j].round(8)
+    return velocities  # in [mkm/s]
+
+
+# Calculate mean velocity of 2 axes (X and Y)
+def calculate_velocity_3d(velx, vely, velz, indx, colx):
+    vel_3d = pd.DataFrame(data=0, index=np.arange(indx - 1), columns=np.arange(colx), dtype=np.float64)
+    for j in range(colx):
+        for i in range(indx - 1):
+            vel_x = velx.iat[i, j]
+            vel_y = vely.iat[i, j]
+            vel_z = velz.iat[i, j]
+            vel_3d.iat[i, j] = math.sqrt(vel_x**2 + vel_y**2 + vel_z**2)
+            vel_3d.iat[i, j] = vel_3d.iat[i, j].round(8)
+    return vel_3d
