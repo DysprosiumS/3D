@@ -1,0 +1,10 @@
+import pandas as pd
+import numpy as np
+import math
+
+
+# Read txt files and save raw data to xlsx tables
+def load_coord(path):
+    coords = pd.read_csv(filepath_or_buffer=path, sep='\t', header=None, float_precision=None)
+    coords.dropna(axis=1, inplace=True)
+    return coords
