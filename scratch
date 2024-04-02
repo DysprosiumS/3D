@@ -1,0 +1,213 @@
+import pandas as pd
+import numpy as np
+import math
+import time
+import concurrent.futures
+
+import coords as co
+import displ as di
+import vel as ve
+import accel as ac
+import kinetic as ki
+import works as wo
+import mean as me
+import save as sa
+import save_sheet as ss
+
+number = 6
+
+path_to_read_x = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/X1000.txt'
+path_to_read_y = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/Y1000.txt'
+path_to_read_z = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/Z1000.txt'
+
+path_to_save_x = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/coordX.xlsx'
+path_to_save_y = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/coordY.xlsx'
+path_to_save_z = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/coordZ.xlsx'
+
+path_to_save_dx = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/displacementX.xlsx'
+path_to_save_dy = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/displacementY.xlsx'
+path_to_save_dz = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/displacementZ.xlsx'
+path_to_save_3dd = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/displ_3D.xlsx'
+
+path_to_save_vx = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/velocityX.xlsx'
+path_to_save_vy = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/velocityY.xlsx'
+path_to_save_vz = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/velocityZ.xlsx'
+path_to_save_3dv = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/vel_3D.xlsx'
+
+path_to_save_ax = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/accelerationX.xlsx'
+path_to_save_ay = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/accelerationY.xlsx'
+path_to_save_az = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/accelerationZ.xlsx'
+path_to_save_3da = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/acc_3D.xlsx'
+
+path_to_save_ke = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/kin_ens.xlsx'
+path_to_save_we = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/mal.xlsx'
+
+path_to_save_me = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/mean.xlsx'
+
+path_to_save_wjx = 'C:/Users/1/Desktop/Новая папка/' + str(number) + '/wjx.xlsx'
+
+if __name__ == "__main__":
+
+    start_time = time.time()
+
+# Physical parameters and constants
+    particle_density = 1.5  # [g/cm^3] MF
+    coating_density = 8.92  # [g/cm^3] Cu
+
+# Parameters of our experimental setup
+    fps = 350  # Frames per 1 second
+    scale = 10  # Scale of our recording, [mkm/px]
+    w = 1  # Coverage rate
+    diameter = 5.70  # Diameter of uncoated particle, [mkm]
+    dc = 0.15  # Thickness of coating, [mkm]
+
+# Calculation of particle parameters
+    rp = diameter/2
+    volume_particle = 4/3*math.pi*rp**3  # [mkm^3]
+    volume_coating = 4/3*w*math.pi*((rp+dc)**3-rp**3)  # [mkm^3]
+    volume_particle /= 10**12  # [cm^3]
+    volume_coating /= 10**12  # [cm^3]
+    mass = particle_density*volume_particle + coating_density*volume_coating  # [g]
+    mass /= 1000  # [kg]
+
+# Save particle parameters
+    exp_set = pd.DataFrame(data=0, index=range(8), columns=range(1), dtype=np.float64)
+    exp_set.iat[0, 0] = 'Масса частицы, кг'
+    exp_set.iat[1, 0] = mass
+    exp_set.iat[2, 0] = 'Объём частицы, м^3'
+    exp_set.iat[3, 0] = volume_particle/10**6
+    exp_set.iat[4, 0] = 'Объём покрытия, м^3'
+    exp_set.iat[5, 0] = volume_coating/10**6
+    exp_set.iat[6, 0] = 'Объём частицы с покрытием, м^3'
+    exp_set.iat[7, 0] = (volume_coating + volume_coating)/10**6
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        fut_loadx = executor.submit(co.load_coord, path_to_read_x)
+        fut_loady = executor.submit(co.load_coord, path_to_read_y)
+        fut_loadz = executor.submit(co.load_coord, path_to_read_z)
+        coordsx = fut_loadx.result()
+        coordsy = fut_loady.result()
+        coordsz = fut_loady.result()
+
+# number of particles
+    colx = len(coordsx.columns)
+# number of frames
+    indx = len(coordsx.index)
+
+# dislp
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        fut_displx = executor.submit(di.calculate_displacement, coordsx, indx, colx, scale)
+        fut_disply = executor.submit(di.calculate_displacement, coordsy, indx, colx, scale)
+        fut_displz = executor.submit(di.calculate_displacement, coordsz, indx, colx, scale)
+        displx = fut_displx.result()
+        disply = fut_disply.result()
+        displz = fut_disply.result()
+
+# vel
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        fut_velx = executor.submit(ve.calculate_velocity, displx, indx, colx, fps)
+        fut_vely = executor.submit(ve.calculate_velocity, disply, indx, colx, fps)
+        fut_velz = executor.submit(ve.calculate_velocity, disply, indx, colx, fps)
+        velx = fut_velx.result()
+        vely = fut_vely.result()
+        velz = fut_vely.result()
+
+# accel
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        fut_accx = executor.submit(ac.calculate_acceleration, velx, indx, colx, fps)
+        fut_accy = executor.submit(ac.calculate_acceleration, vely, indx, colx, fps)
+        fut_accz = executor.submit(ac.calculate_acceleration, vely, indx, colx, fps)
+        accx = fut_accx.result()
+        accy = fut_accy.result()
+        accz = fut_accy.result()
+
+# works
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        fut_workxj = executor.submit(wo.calculate_work, accx, displx, 1, indx, colx, mass)
+        workxj = fut_workxj.result()
+        fut_workyj = executor.submit(wo.calculate_work, accy, disply, 1, indx, colx, mass)
+        workyj = fut_workyj.result()
+        fut_workzj = executor.submit(wo.calculate_work, accz, displz, 1, indx, colx, mass)
+        workzj = fut_workyj.result()
+        
+        fut_workxev = executor.submit(wo.calculate_work, accx, displx, 2, indx, colx, mass)
+        workxev = fut_workxev.result()
+        fut_workyev = executor.submit(wo.calculate_work, accy, disply, 2, indx, colx, mass)
+        workyev = fut_workyev.result()
+        fut_workzev = executor.submit(wo.calculate_work, accz, displz, 2, indx, colx, mass)
+        workzev = fut_workzev.result()
+
+# 2D
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        fut_displ3d = executor.submit(di.calculate_displacement_3d, displx, disply, displz, indx, colx)
+        fut_vel3d = executor.submit(ve.calculate_velocity_3d, velx, vely, velz, indx, colx)
+        fut_acc3d = executor.submit(ac.calculate_acceleration_3d, accx, accy, accz, indx, colx)
+        fut_work3dj = executor.submit(wo.calculate_work_3d, workxj, workyj, workzj, indx, colx)
+        fut_work3dev = executor.submit(wo.calculate_work_3d, workxev, workyev, workzev, indx, colx)
+        displ_3d = fut_displ3d.result()
+        vel_3d = fut_vel3d.result()
+        acc_3d = fut_acc3d.result()
+        work_3dj = fut_work3dj.result()
+        work_3dev = fut_work3dev.result()
+
+# kinetic
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        fut_kinetj = executor.submit(ki.calculate_kin_en, vel_3d, 1, indx, colx, mass)
+        kinetj = fut_kinetj.result()
+        fut_kinetev = executor.submit(ki.calculate_kin_en, vel_3d, 2, indx, colx, mass)
+        kinetev = fut_kinetev.result()
+
+# mean
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        fut_mean_displ = executor.submit(me.calc_mean, displ_3d)
+        fut_mean_vel = executor.submit(me.calc_mean, vel_3d)
+        fut_mean_acc = executor.submit(me.calc_mean, acc_3d)
+        fut_mean_kin_en_j = executor.submit(me.calc_mean, kinetj)
+        fut_mean_kin_en_ev = executor.submit(me.calc_mean, kinetev)
+        fut_mean_work_j = executor.submit(me.calc_mean, work_3dj)
+        fut_mean_work_ev = executor.submit(me.calc_mean, work_3dev)
+        mean_displ = fut_mean_displ.result()
+        mean_vel = fut_mean_vel.result()
+        mean_acc = fut_mean_acc.result()
+        mean_kin_en_j = fut_mean_kin_en_j.result()
+        mean_kin_en_ev = fut_mean_kin_en_ev.result()
+        mean_work_j = fut_mean_work_j.result()
+        mean_work_ev = fut_mean_work_ev.result()
+
+# Save displacement for both axes
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        fut_save_x = executor.submit(sa.save_data, coordsx, path_to_save_x, 'Sheet1', '%.6f')
+        fut_save_y = executor.submit(sa.save_data, coordsy, path_to_save_y, 'Sheet1', '%.6f')
+        fut_save_z = executor.submit(sa.save_data, coordsz, path_to_save_z, 'Sheet1', '%.6f')
+        fut_save_dx = executor.submit(sa.save_data, displx, path_to_save_dx, 'Sheet1', '%.7f')
+        fut_save_dy = executor.submit(sa.save_data, disply, path_to_save_dy, 'Sheet1', '%.7f')
+        fut_save_dz = executor.submit(sa.save_data, displz, path_to_save_dz, 'Sheet1', '%.7f')
+        fut_save_vx = executor.submit(sa.save_data, velx, path_to_save_vx, 'Sheet1', '%.8f')
+        fut_save_vy = executor.submit(sa.save_data, vely, path_to_save_vy, 'Sheet1', '%.8f')
+        fut_save_vz = executor.submit(sa.save_data, velz, path_to_save_vz, 'Sheet1', '%.8f')
+        fut_save_ax = executor.submit(sa.save_data, accx, path_to_save_ax, 'Sheet1', '%.9f')
+        fut_save_ay = executor.submit(sa.save_data, accy, path_to_save_ay, 'Sheet1', '%.9f')
+        fut_save_az = executor.submit(sa.save_data, accz, path_to_save_az, 'Sheet1', '%.9f')
+        fut_save_wjx = executor.submit(sa.save_data, workxj, path_to_save_wjx, 'Sheet1', '%.29f')
+        fut_save_3dd = executor.submit(sa.save_data, displ_3d, path_to_save_3dd, 'Sheet1', '%.7f')
+        fut_save_3dv = executor.submit(sa.save_data, vel_3d, path_to_save_3dv, 'Sheet1', '%.8f')
+        fut_save_3da = executor.submit(sa.save_data, acc_3d, path_to_save_3da, 'Sheet1', '%.9f')
+
+ 
+
+    with pd.ExcelWriter(path_to_save_we) as writer:
+        work_3dj.to_excel(excel_writer=writer, sheet_name='Work J', index=False, header=False)
+        work_3dev.to_excel(excel_writer=writer, sheet_name='Work eV', index=False, header=False)
+
+    with pd.ExcelWriter(path_to_save_me) as writer:
+        exp_set.to_excel(excel_writer=writer, sheet_name='Exp Setup', index=False, header=False)
+        mean_displ.to_excel(excel_writer=writer, sheet_name='mDispl mkm', index=False, header=False)
+        mean_vel.to_excel(excel_writer=writer, sheet_name='mVel mkms', index=False, header=False)
+        mean_acc.to_excel(excel_writer=writer, sheet_name='mAccel mkms2', index=False, header=False)
+        mean_kin_en_j.to_excel(excel_writer=writer, sheet_name='mKin en J', index=False, header=False)
+        mean_kin_en_ev.to_excel(excel_writer=writer, sheet_name='mKin en eV', index=False, header=False)
+        mean_work_j.to_excel(excel_writer=writer, sheet_name='mWork J', index=False, header=False)
+        mean_work_ev.to_excel(excel_writer=writer, sheet_name='mWork eV', index=False, header=False)
+
+ #   print(mass)
+    print("End:", time.time() - start_time, "секунд.")
