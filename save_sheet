@@ -1,0 +1,20 @@
+import pandas as pd
+import numpy as np
+import math
+
+
+def save_sheet(dataframe_1, dataframe_2, dest, sheet_1, sheet_2, flo):
+    dataframe_1.to_excel(excel_writer=dest, sheet_name=sheet_1, index=False, header=False, float_format=flo)
+    dataframe_2.to_excel(excel_writer=dest, sheet_name=sheet_2, index=False, header=False, float_format=flo)
+
+
+def save_sheet2(dataframe_1, dataframe_2, dataframe_3, dataframe_4, dataframe_5, dataframe_6, dataframe_7, dataframe_8,
+                dest, sheet_1, sheet_2, sheet_3, sheet_4, sheet_5, sheet_6, sheet_7, sheet_8, flo):
+    dataframe_1.to_excel(excel_writer=dest, sheet_name=sheet_1, index=False, header=False, float_format=flo)
+    dataframe_2.to_excel(excel_writer=dest, sheet_name=sheet_2, index=False, header=False, float_format=flo)
+    dataframe_3.to_excel(excel_writer=dest, sheet_name=sheet_3, index=False, header=False, float_format=flo)
+    dataframe_4.to_excel(excel_writer=dest, sheet_name=sheet_4, index=False, header=False, float_format=flo)
+    dataframe_5.to_excel(excel_writer=dest, sheet_name=sheet_5, index=False, header=False, float_format=flo)
+    dataframe_6.to_excel(excel_writer=dest, sheet_name=sheet_6, index=False, header=False, float_format=flo)
+    dataframe_7.to_excel(excel_writer=dest, sheet_name=sheet_7, index=False, header=False, float_format=flo)
+    dataframe_8.to_excel(excel_writer=dest, sheet_name=sheet_8, index=False, header=False, float_format=flo)
