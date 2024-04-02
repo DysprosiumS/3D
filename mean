@@ -1,0 +1,8 @@
+import pandas as pd
+import numpy as np
+import math
+
+
+def calc_mean(dataframe):
+    mean = dataframe.mean()
+    return mean
