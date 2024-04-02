@@ -1,0 +1,28 @@
+import pandas as pd
+import numpy as np
+import math
+
+
+# Calculating displacements
+def calculate_displacement(coords, indx, colx, scale):
+    displ = pd.DataFrame(data=0, index=np.arange(indx-1), columns=np.arange(colx), dtype=np.float64)
+    for j in range(colx):
+        for i in range(indx - 1):
+            x1 = coords.iat[i, j]
+            x2 = coords.iat[i+1, j]
+            displ.iat[i, j] = (x2 - x1)*scale
+            displ.iat[i, j] = displ.iat[i, j].round(7)
+    return displ  # in [mkm]
+
+
+# Calculate mean displacement of 2 axes (X and Y)
+def calculate_displacement_3d(displx, disply, displz, indx, colx):
+    displ_3d = pd.DataFrame(data=0, index=np.arange(indx - 1), columns=np.arange(colx), dtype=np.float64)
+    for j in range(colx):
+        for i in range(indx - 1):
+            displ_x = displx.iat[i, j]
+            displ_y = disply.iat[i, j]
+            displ_z = displz.iat[i, j]
+            displ_3d.iat[i, j] = math.sqrt(displ_x**2 + displ_y**2 + displ_z**2)
+            displ_3d.iat[i, j] = displ_3d.iat[i, j].round(7)
+    return displ_3d
