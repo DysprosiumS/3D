@@ -3,18 +3,24 @@ import numpy as np
 import math
 
 
-def save_sheet(dataframe_1, dataframe_2, dest, sheet_1, sheet_2, flo):
-    dataframe_1.to_excel(excel_writer=dest, sheet_name=sheet_1, index=False, header=False, float_format=flo)
-    dataframe_2.to_excel(excel_writer=dest, sheet_name=sheet_2, index=False, header=False, float_format=flo)
+def calculate_acceleration(velocities, indx, colx, fps):
+    accelerations = pd.DataFrame(data=0, index=np.arange(indx-2), columns=np.arange(colx), dtype=np.float64)
+    for j in range(colx):
+        for i in range(indx - 2):
+            velocity1 = velocities.iat[i, j]
+            velocity2 = velocities.iat[i+1, j]
+            accelerations.iat[i, j] = abs(velocity2-velocity1) * fps
+            accelerations.iat[i, j].round(9)
+    return accelerations  # in [mkm/s^2]
 
 
-def save_sheet2(dataframe_1, dataframe_2, dataframe_3, dataframe_4, dataframe_5, dataframe_6, dataframe_7, dataframe_8,
-                dest, sheet_1, sheet_2, sheet_3, sheet_4, sheet_5, sheet_6, sheet_7, sheet_8, flo):
-    dataframe_1.to_excel(excel_writer=dest, sheet_name=sheet_1, index=False, header=False, float_format=flo)
-    dataframe_2.to_excel(excel_writer=dest, sheet_name=sheet_2, index=False, header=False, float_format=flo)
-    dataframe_3.to_excel(excel_writer=dest, sheet_name=sheet_3, index=False, header=False, float_format=flo)
-    dataframe_4.to_excel(excel_writer=dest, sheet_name=sheet_4, index=False, header=False, float_format=flo)
-    dataframe_5.to_excel(excel_writer=dest, sheet_name=sheet_5, index=False, header=False, float_format=flo)
-    dataframe_6.to_excel(excel_writer=dest, sheet_name=sheet_6, index=False, header=False, float_format=flo)
-    dataframe_7.to_excel(excel_writer=dest, sheet_name=sheet_7, index=False, header=False, float_format=flo)
-    dataframe_8.to_excel(excel_writer=dest, sheet_name=sheet_8, index=False, header=False, float_format=flo)
+def calculate_acceleration_3d(accx, accy, accz, indx, colx):
+    acc_3d = pd.DataFrame(data=0, index=np.arange(indx - 2), columns=np.arange(colx), dtype=np.float64)
+    for j in range(colx):
+        for i in range(indx - 2):
+            acc_x = accx.iat[i, j]
+            acc_y = accy.iat[i, j]
+            acc_z = accz.iat[i, j]
+            acc_3d.iat[i, j] = math.sqrt(acc_x**2 + acc_y**2 + acc_z**2)
+            acc_3d.iat[i, j] = acc_3d.iat[i, j].round(9)
+    return acc_3d
