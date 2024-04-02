@@ -1,0 +1,22 @@
+import pandas as pd
+import numpy as np
+import math
+
+
+def calculate_kin_en(velocities, dimension, indx, colx, mass):
+    kin_ens_j = pd.DataFrame(data=0, index=np.arange(indx-1), columns=np.arange(colx), dtype=np.float64)
+    kin_ens_ev = pd.DataFrame(data=0, index=np.arange(indx-1), columns=np.arange(colx), dtype=np.float64)
+    if dimension == 1:
+        for j in range(colx):
+            for i in range(indx - 1):
+                velocity = velocities.iat[i, j]
+                kin_ens_j.iat[i, j] = 0.5*mass*(velocity**2)/(10**12)
+                kin_ens_j.iat[i, j].round(9)
+        return kin_ens_j  # in [J]
+    if dimension == 2:
+        for j in range(colx):
+            for i in range(indx - 1):
+                velocity = velocities.iat[i, j]
+                kin_ens_ev.iat[i, j] = 0.5*mass*(velocity**2)*(10**7)/1.6
+                kin_ens_ev.iat[i, j].round(9)
+        return kin_ens_ev  # in [eV]
