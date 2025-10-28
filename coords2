@@ -1,0 +1,24 @@
+import pandas as pd
+
+
+# Read txt files and save raw data to xlsx tables
+def load_coord(path):
+    try:
+        # Попробуйте прочитать с разными разделителями
+        coords = pd.read_csv(filepath_or_buffer=path, sep='\s+', header=None,
+                             engine='python', na_values=['', ' ', 'NaN', 'NULL'])
+    except:
+        # Если не сработает, попробуйте табуляцию
+        coords = pd.read_csv(filepath_or_buffer=path, sep='\t', header=None,
+                             engine='python', na_values=['', ' ', 'NaN', 'NULL'])
+
+    coords.dropna(axis=1, how='all', inplace=True)  # Удаляем только полностью пустые столбцы
+    coords = coords.iloc[::-1, :]
+
+    # Преобразуем только те столбцы, которые можно преобразовать
+    for col in coords.columns:
+        coords[col] = pd.to_numeric(coords[col], errors='coerce')
+
+    # Удаляем строки с NaN после преобразования
+    coords.dropna(inplace=True)
+    return coords
